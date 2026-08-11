@@ -18,6 +18,10 @@ sentence, short sentences, active voice, simple tenses, consistent terms,
 kept articles. STE keeps the proposal readable for a global audience — it
 does not change the technical content.
 
+> Requires the **ste** skill. Install both (`npx skills@latest add
+> rimzzlabs/skills -s ste,rfc`) or the whole set; the link above resolves only
+> when both are installed. If ste is absent, still apply those STE principles.
+
 ## Workflow
 
 1. **Get the topic.** If the user's request is vague, ask 2–3 focused

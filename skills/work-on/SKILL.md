@@ -19,6 +19,11 @@ where things stand.
 **Issue prose follows Simplified Technical English** — apply the
 [ste](../ste/SKILL.md) rules to every section.
 
+> Requires the **ste** skill. Install both (`npx skills@latest add
+> rimzzlabs/skills -s ste,work-on`) or the whole set; the link above resolves
+> only when both are installed. If ste is absent, still apply those STE
+> principles.
+
 ## When you start work (create the issue)
 
 1. **Understand the request.** If it is vague, ask 2–3 focused questions

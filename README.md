@@ -21,6 +21,10 @@ Add a single skill instead of the whole set:
 npx skills@latest add rimzzlabs/skills/ste
 ```
 
+**Some skills reference others** — `rfc` and `work-on` use `ste`. Installing the
+whole set is recommended. If you install one, add its companion too (for example
+`-s ste,rfc`), or the cross-skill links won't resolve.
+
 ## Reference
 
 - **[ste](./skills/ste/SKILL.md)** — Rewrite and check technical writing against
