@@ -351,11 +351,40 @@ const color =
 
 // ✓ ts-pattern — .exhaustive() fails to compile if you miss a case
 const color = match(status)
+  .with("active", () => "green" as const)
+  .with("pending", () => "yellow" as const)
+  .with("banned", () => "red" as const)
+  .exhaustive();
+// color: "green" | "yellow" | "red"
+```
+
+### Keep literal types with `as const`
+
+ts-pattern and ts-belt infer return types from the callbacks. TypeScript widens
+a literal that a callback returns: `() => "green"` returns `string`, not
+`"green"`. Then the result of `match` is `string`, and the union is lost.
+
+When the literal type is important, add `as const` to the returned value. The
+same applies to ts-belt callbacks and default values, for example in `O.map`,
+`O.getWithDefault`, and `A.map`.
+
+```ts
+// ✗ color: string
+const color = match(status)
   .with("active", () => "green")
   .with("pending", () => "yellow")
-  .with("banned", () => "red")
+  .exhaustive();
+
+// ✓ color: "green" | "yellow"
+const color = match(status)
+  .with("active", () => "green" as const)
+  .with("pending", () => "yellow" as const)
   .exhaustive();
 ```
+
+In ts-pattern, `.returnType<Color>()` is an alternative. It sets the return type
+one time, before the first `.with()`. A type annotation on the variable does not
+help: the chain still returns `string`, and the assignment fails to compile.
 
 ### Match on query state
 
