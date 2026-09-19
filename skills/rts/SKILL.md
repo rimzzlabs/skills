@@ -419,9 +419,13 @@ function roundMoney(value: number) { return Math.round(value * 100) / 100 }
 Some libraries have their own conventions. When a project uses one of these,
 follow [LIBRARIES.md](./LIBRARIES.md):
 
-- **TanStack Query** — query-key management, key/`signal` flow through `queryFn`.
-- **Zustand** — `immer` and `persist` middleware, optional auto-selectors.
+- **TanStack Query** — query-key management, key/`signal` flow through
+  `queryFn`, `queryOptions()`, invalidation through the key factory.
+- **Zustand** — `immer` and `persist` middleware (`partialize`, `version`),
+  optional auto-selectors.
 - **React Hook Form** — bind fields through the UI library's field component, not
-  `register()`.
+  `register()`; validate with a schema.
 - **Dates** — ask before adding a date library; prefer `date-fns` for
   timezone-aware work.
+- **Data handling** — ask before adding `@mobily/ts-belt` and `ts-pattern`; no
+  nested ternaries, immutable data, compose with `pipe()`.
