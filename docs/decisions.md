@@ -1,5 +1,24 @@
 # Decisions
 
+## 2026-10-04 — split rts into typescript and react
+
+**Decision:** Rename the `rts` skill to `typescript`. Move the React rules
+(components, hooks, JSX composition, WAI-ARIA, `useEffect`, component file
+grouping) and the React libraries (TanStack Query, Zustand, React Hook Form)
+into a new `react` skill. `react` depends on `typescript`; `typescript` does not
+depend on `react`.
+
+**Why:** One skill covered two concerns. Backend TypeScript code loaded React
+rules it does not use, and the React rules had no room to grow. Two skills with
+one concern each are easier to read and to install separately.
+
+**Rejected:**
+
+- Keep one skill and add a React section. The file would pass the 600–800 line
+  cap that its own rule 8 sets.
+- Make `react` standalone. It would duplicate function style, `Result` errors,
+  and immutability rules, and the two copies would drift.
+
 ## 2026-09-19 — rts: ts-belt and ts-pattern for data handling
 
 **Decision:** The `rts` skill prefers `@mobily/ts-belt` (pinned to

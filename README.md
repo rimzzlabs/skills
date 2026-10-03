@@ -21,9 +21,10 @@ Add a single skill instead of the whole set:
 npx skills@latest add rimzzlabs/skills/ste
 ```
 
-**Some skills reference others** — `rfc` and `work-on` use `ste`. Installing the
-whole set is recommended. If you install one, add its companion too (for example
-`-s ste,rfc`), or the cross-skill links won't resolve.
+**Some skills reference others** — `rfc` and `work-on` use `ste`, and `react`
+uses `typescript`. Installing the whole set is recommended. If you install one,
+add its companion too (for example `-s ste,rfc` or `-s typescript,react`), or
+the cross-skill links won't resolve.
 
 ## Reference
 
@@ -35,9 +36,14 @@ whole set is recommended. If you install one, add its companion too (for example
 - **[work-on](./skills/work-on/SKILL.md)** — Open a living GitHub issue to track
   a task, then keep it updated with decisions and status as the work moves, so
   human and agent share one source of truth.
-- **[rts](./skills/rts/SKILL.md)** — TypeScript/JavaScript conventions applied
-  automatically when writing JS/TS/JSX/TSX: function style, argument limits,
-  declarative code, error handling, file size, and more.
+- **[typescript](./skills/typescript/SKILL.md)** — TypeScript/JavaScript
+  conventions applied automatically when writing JS/TS/JSX/TSX: function style,
+  argument limits, declarative code, type safety, immutability, error handling,
+  file size, and more.
+- **[react](./skills/react/SKILL.md)** — React conventions applied
+  automatically when writing JSX/TSX, components, or hooks: composition,
+  WAI-ARIA, effects, file grouping, and ecosystem rules for TanStack Query,
+  Zustand, and React Hook Form. Builds on `typescript`.
 
 ## Layout
 

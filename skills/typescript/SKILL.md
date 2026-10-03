@@ -1,25 +1,30 @@
 ---
-name: rts
+name: typescript
 description: >-
   TypeScript/JavaScript conventions. Apply automatically whenever
   writing or editing JavaScript, TypeScript, JSX, or TSX code (.js/.jsx/.ts/.tsx)
-  — functions, types, error handling, comments, file size, exports, naming,
-  React composition, accessibility (WAI-ARIA), and library conventions for
-  TanStack Query and Zustand. Use for any new code or refactor in these
-  languages.
+  — functions, types, type safety, immutability, error handling, comments,
+  file size, exports, naming, and library conventions for dates and data
+  handling (ts-belt, ts-pattern). Use for any new code or refactor in these
+  languages. For React-specific rules (components, hooks, JSX, TanStack Query,
+  Zustand, React Hook Form), also apply the react skill.
 ---
 
-# rts — TypeScript/JavaScript conventions
+# typescript — TypeScript/JavaScript conventions
 
 Apply these rules to all JavaScript, TypeScript, JSX, and TSX code. They keep
 code declarative, low in cognitive load, and easy to maintain. Follow them for
 new code and when you refactor existing code.
 
+React code follows these rules too. The `react` skill adds rules for
+components, hooks, JSX, and the React ecosystem on top of this file.
+
 ## 1. Use the `function` keyword; keep arrow functions inline
 
 Declare every top-level (module-scope) function with the `function` keyword.
-This includes React components and hooks. Use arrow functions only inline —
-inside a block, a callback, or a returned expression.
+Use arrow functions only inline — inside a block, a callback, or a returned
+expression. (React components and hooks follow the same rule — see the `react`
+skill.)
 
 ```ts
 // ✓ top-level declaration
@@ -32,20 +37,6 @@ export const getUser = (id: string) => { /* ... */ }
 
 // ✓ inline arrow in a callback
 const ids = users.map((user) => user.id)
-```
-
-```tsx
-// ✓ components and hooks use the function keyword too
-export function UserCard(props: UserCardProps) {
-  return <div>{props.name}</div>
-}
-
-function useUser(id: string) {
-  // ...
-}
-
-// ✗ top-level arrow component
-export const UserCard = (props: UserCardProps) => <div>{props.name}</div>
 ```
 
 ## 2. At most 2 parameters; use an object beyond that
@@ -73,8 +64,7 @@ only forces a single object once the count would exceed 2.
 Keep functions pure. Allow side effects only when the task is inherently an
 effect — for example, opening a connection to an external service (WebSocket,
 database, message queue). Isolate those effects; do not mix them into pure
-logic. (Updating React state from an event handler is not the kind of side
-effect this rule restricts — see rule 16 for effects.)
+logic.
 
 ## 4. Prefer declarative code; use imperative only for performance
 
@@ -138,11 +128,10 @@ function onResize() { /* ... */ }
   map the thrown error to a known error with the correct status code, and return
   that.
 - **Library boundaries that expect a throw:** some libraries use a thrown error
-  as their error channel. TanStack Query (`queryFn`, `mutationFn`) and React
-  error boundaries are the common cases — they turn a throw into error state for
-  the UI. There you must throw; a returned `Result` breaks `isError` / `error`.
-  Keep your own pure functions returning `Result`, and throw only at that
-  boundary.
+  as their error channel and turn it into error state for you. There you must
+  throw; a returned `Result` breaks their error handling. Keep your own pure
+  functions returning `Result`, and throw only at that boundary. (TanStack Query
+  and React error boundaries are the common cases — see the `react` skill.)
 
 Return errors with a `Result` union:
 
@@ -170,19 +159,6 @@ function getUser(id: string) {
   const user = db.users.find((row) => row.id === id)
   if (!user) throw new NotFoundError("user", id)
   return user
-}
-
-// ✓ TanStack Query — the boundary expects a throw
-//   (key comes from a factory; signal flows from ctx — see LIBRARIES.md)
-function userQuery(id: string) {
-  return {
-    queryKey: userKeys.detail(id),
-    queryFn: async ({ signal }: { signal: AbortSignal }) => {
-      const res = await api.get(`/users/${id}`, { signal })
-      if (!res.ok) throw new Error("User not found") // becomes query.error
-      return res.json() as Promise<User>
-    },
-  }
 }
 ```
 
@@ -226,8 +202,8 @@ function createUser(params: CreateUserParams) {
 }
 
 // ✓ more than 5 keys — no destructure
-function render(props: WidgetProps) {
-  return <div title={props.title}>{props.label}</div>
+function buildQuery(options: QueryOptions) {
+  return `${options.table} ${options.where} ${options.orderBy} ${options.limit}`
 }
 ```
 
@@ -239,113 +215,35 @@ cognitive load. Split before that happens.
 
 ## 12. Prefer named exports over default exports
 
-Export with named exports. This applies to utility functions and JSX
-components — named exports keep import names consistent and make refactors and
-find-references reliable. Use a default export only where a framework requires
-it, such as a Next.js `page.tsx`, `layout.tsx`, or route file.
+Export with named exports. Named exports keep import names consistent and make
+refactors and find-references reliable. Use a default export only where a
+framework requires it (for example a Next.js route file — see the `react`
+skill).
 
 ```ts
 // ✓ named
 export function formatDate(date: Date) { /* ... */ }
-export function UserCard(props: UserCardProps) { /* ... */ }
 
-// ✗ default for a util or component
+// ✗ default for a util
 export default function formatDate(date: Date) { /* ... */ }
-
-// ✓ framework requires default — Next.js page
-export default function Page() { /* ... */ }
 ```
 
-## 13. Name files in kebab-case; group components by what they render
+## 13. Name files and directories in kebab-case
 
-Name directories and files in kebab-case. For JSX components, put the files in a
-directory named for the feature, and name each file for the part it renders.
-Grouping by render target keeps a feature's pieces together and readable.
+Name directories and files in kebab-case. One name style across the repo keeps
+imports predictable and avoids case-sensitivity bugs between file systems.
 
 ```
-user-table/
-  user-table.tsx               # the top-level table
-  user-table-list.tsx          # the list / body
-  user-table-list-row.tsx      # a single row
-  user-table-list-toolbar.tsx  # search, filter, and other controls
-  user-table-pagination.tsx    # pager controls
+lib/
+  date-format.ts
+  query-builder.ts
+services/
+  user-service.ts
 ```
 
-## 14. Prefer composition over configuration in JSX
+For how to group React component files, see the `react` skill.
 
-Build UI by composing small components. Do not grow one component with many props
-or boolean flags to change what it renders. Composition keeps each piece simple
-and reusable; a wall of configuration props does the opposite.
-
-Export each part as its own named component, the way shadcn/ui does. Do not
-attach subcomponents as properties — no `Card.Header` dot notation. Callers
-import and compose the raw components by name (see rule 12).
-
-```tsx
-// ✗ configuration — flags crammed into one prop list
-<Card title="User" bordered hasFooter footerText="Save" onFooterClick={save} />
-
-// ✓ composition — flat, separately exported components (shadcn style)
-<Card>
-  <CardHeader>User</CardHeader>
-  <CardBody>{/* ... */}</CardBody>
-  <CardFooter>
-    <Button onClick={save}>Save</Button>
-  </CardFooter>
-</Card>
-```
-
-When an interactive component needs to share local state across its parts, ask
-the user how to share it: React Context, or a state library such as Zustand. Pick
-Context for small, self-contained widget state; reach for Zustand when the state
-is larger, shared more widely, or needs middleware (see the Zustand section in
-[LIBRARIES.md](./LIBRARIES.md)).
-
-## 15. Meet WAI-ARIA for interactive UI
-
-Every interactive UI must comply with WAI-ARIA. Reach for the correct native
-element first (`button`, `a`, `label`, `input`) — it brings roles, focus, and
-keyboard behavior for free. Add ARIA only to fill real gaps: an accessible name
-(`aria-label` / `aria-labelledby`), state (`aria-expanded`, `aria-selected`,
-`aria-disabled`), and keyboard handling for custom widgets.
-
-```tsx
-// ✗ a div pretending to be a button — no role, no keyboard, no name
-<div className="btn" onClick={close}>×</div>
-
-// ✓ native element with an accessible name
-<button type="button" aria-label="Close dialog" onClick={close}>×</button>
-```
-
-## 16. Do not reach for `useEffect` by default
-
-Most effects are avoidable, and avoidable effects cause bugs (extra renders,
-stale state, race conditions). Before you write `useEffect`, apply the guidance
-in React's "You Might Not Need an Effect":
-
-- **Deriving data from props or state?** Compute it during render — no state, no
-  effect.
-- **Responding to a user action?** Do the work in the event handler.
-- **Resetting state when a prop changes?** Use a `key`, not an effect.
-- **Caching an expensive result?** Use `useMemo`.
-
-Use `useEffect` only to synchronize with an external system — a subscription, a
-non-React widget, an analytics ping — where nothing else fits.
-
-```tsx
-// ✗ effect to derive state from other state
-const [fullName, setFullName] = useState("")
-useEffect(() => {
-  setFullName(`${first} ${last}`)
-}, [first, last])
-
-// ✓ derive during render
-const fullName = `${first} ${last}`
-```
-
-Reference: https://react.dev/learn/you-might-not-need-an-effect
-
-## 17. Avoid barrel files
+## 14. Avoid barrel files
 
 Do not create `index.ts` files whose only job is to re-export other modules.
 Barrel files invite circular-dependency traps, defeat tree-shaking (the bundler
@@ -367,7 +265,7 @@ import { UserCard } from "@/components"
 import { UserCard } from "@/components/user-card"
 ```
 
-## 18. Do not over-extract
+## 15. Do not over-extract
 
 Prefer one linear, readable function over a scatter of tiny single-use helpers.
 Fragmenting a single flow into micro-functions spreads it across the file and
@@ -394,7 +292,7 @@ function getGrandTotal(order: Order) {
 }
 ```
 
-## 19. Duplicate until the abstraction is obvious
+## 16. Duplicate until the abstraction is obvious
 
 Do not abstract on the first sight of similarity. Code that merely *looks* alike
 today — but changes for different reasons — turns a shared helper into a coupling
@@ -414,18 +312,223 @@ function roundMoney(value: number) { return Math.round(value * 100) / 100 }
 // ✓ let the two live apart until a genuine third, shared case appears
 ```
 
+## 17. Prefer `if` over ternaries; never nest a ternary
+
+Prefer an `if` statement or an early return over a ternary. A ternary hides a
+branch inside an expression, and the reader must unpack it. Use a ternary only
+for a short, single-level choice between two plain values. Never nest a ternary
+inside another ternary. When a value depends on more than two cases, use `if`
+blocks, a lookup object, or `ts-pattern` (see [LIBRARIES.md](./LIBRARIES.md)).
+
+```ts
+// ✗ nested ternary — three branches packed into one expression
+const label = count === 0 ? "none" : count === 1 ? "one" : "many"
+
+// ✓ early returns — each branch is visible
+function getLabel(count: number) {
+  if (count === 0) return "none"
+  if (count === 1) return "one"
+  return "many"
+}
+
+// ✓ lookup object for a fixed set of cases
+const labelByStatus: Record<Status, string> = {
+  idle: "Idle",
+  loading: "Loading…",
+  error: "Failed",
+}
+const label = labelByStatus[status]
+
+// ✓ acceptable — one level, two plain values, fits on one line
+const shipping = order.total > 100 ? 0 : 5
+```
+
+## 18. No `as` casts and no `!` assertions
+
+Do not use `as` to silence the compiler, and do not use the `!` non-null
+assertion. Both tell TypeScript to trust you and remove the check that would
+catch the bug. Narrow the type instead: an early return, a type guard, or
+`instanceof`. The only allowed cast is `as const`.
+
+```ts
+// ✗ cast and assertion hide the missing check
+const user = data as User
+const name = users.find((row) => row.id === id)!.name
+
+// ✓ narrow, then use
+const match = users.find((row) => row.id === id)
+if (!match) return { ok: false, error: new Error("User not found") }
+const name = match.name
+
+// ✓ the one allowed cast
+const STATUSES = ["idle", "loading", "error"] as const
+```
+
+## 19. No `any`; validate `unknown` at the boundary
+
+Do not use `any`. Data that enters from outside — a network response,
+`JSON.parse`, `localStorage`, an env var, a `catch` clause — is `unknown`.
+Validate it once at that boundary with a schema (zod, valibot, or the project's
+choice) and trust the type after that. Do not read `e.message` from a `catch`
+without a check.
+
+```ts
+// ✗ trusts the wire
+const user: User = await res.json()
+
+// ✓ validate once at the boundary
+const parsed = userSchema.safeParse(await res.json())
+if (!parsed.success) return { ok: false, error: new Error("Bad user payload") }
+const user = parsed.data
+
+// ✗ assumes the thrown value is an Error
+catch (e) { log(e.message) }
+
+// ✓ check first
+catch (e) {
+  const message = e instanceof Error ? e.message : String(e)
+  log(message)
+}
+```
+
+## 20. Exhaust every discriminated union
+
+When you branch on a union's discriminant, make the compiler fail when a case is
+missing. End a `switch` with a `never` check, or use `ts-pattern` with
+`.exhaustive()` (see [LIBRARIES.md](./LIBRARIES.md)). Do not add a silent
+`default` that returns a fallback — that hides the new case.
+
+```ts
+// ✗ a new Shape kind compiles and returns 0 at runtime
+function area(shape: Shape) {
+  switch (shape.kind) {
+    case "circle": return Math.PI * shape.radius ** 2
+    case "square": return shape.size ** 2
+    default: return 0
+  }
+}
+
+// ✓ the compiler reports the missing case
+function area(shape: Shape) {
+  switch (shape.kind) {
+    case "circle": return Math.PI * shape.radius ** 2
+    case "square": return shape.size ** 2
+    default: {
+      const unhandled: never = shape
+      throw new Error(`Unhandled shape: ${JSON.stringify(unhandled)}`)
+    }
+  }
+}
+```
+
+## 21. Model state as a union, not as boolean flags
+
+Do not represent one state with several booleans (`isLoading`, `isError`,
+`data`). Flags let impossible combinations compile, such as loading and error at
+the same time. Use one discriminated union with a `status` field. Each variant
+carries only the data that exists in that state.
+
+```ts
+// ✗ four fields, many impossible combinations
+interface ViewState {
+  isLoading: boolean
+  isError: boolean
+  error?: Error
+  data?: User
+}
+
+// ✓ one union, each state is complete and exclusive
+type ViewState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; error: Error }
+  | { status: "success"; data: User }
+```
+
+## 22. Do not mutate inputs
+
+Treat every parameter as read-only. Do not `push` onto a parameter array, do not
+`delete` a key, and do not `Object.assign` onto props or state. Return a new
+value. Mark parameter types `readonly` or `Readonly<T>` so the compiler enforces
+it. This extends rule 5 (`toSorted` over `sort`).
+
+```ts
+// ✗ the caller's array changes under them
+function addTag(tags: string[], tag: string) {
+  tags.push(tag)
+  return tags
+}
+
+// ✓ a new array; the input is untouched
+function addTag(tags: readonly string[], tag: string) {
+  return [...tags, tag]
+}
+```
+
+## 23. `const` by default
+
+Declare with `const`. Use `let` only when the binding must change, and keep
+that scope small. If you reach for `let` to fill a value from branches, use a
+function with early returns (rule 17) or a lookup instead.
+
+```ts
+// ✗ let used as a slot for branch results
+let label
+if (count === 0) label = "none"
+else label = "some"
+
+// ✓ const, value comes from one expression or a function
+const label = getLabel(count)
+```
+
+## 24. No `async` without `await`; run independent awaits together
+
+Do not mark a function `async` if it never awaits — it only wraps the return in
+a Promise. When two or more awaits do not depend on each other, start them
+together and wait with `Promise.all`. Sequential awaits on independent calls add
+their latencies.
+
+```ts
+// ✗ async with nothing to await
+async function getId(user: User) {
+  return user.id
+}
+
+// ✗ sequential — the second request waits for the first
+const user = await loadUser(id)
+const posts = await loadPosts(id)
+
+// ✓ independent calls run together
+const [user, posts] = await Promise.all([loadUser(id), loadPosts(id)])
+```
+
+## 25. Do not use optional chaining to hide a required field
+
+Use `?.` and `??` only where the value is truly optional in the type. Do not
+chain `?.` through a field that must exist — it turns a bug into an `undefined`
+that travels further. If a required field can be missing at runtime, the type is
+wrong: fix the type, or validate at the boundary (rule 19).
+
+```ts
+// ✗ user is required here; ?. hides a broken state
+const name = props.user?.profile?.name ?? ""
+
+// ✓ the type says user exists, so read it directly
+const name = props.user.profile.name
+
+// ✓ optional in the type, so ?. is correct
+const nickname = props.user.profile.nickname ?? props.user.profile.name
+```
+
 ## Library conventions
 
 Some libraries have their own conventions. When a project uses one of these,
 follow [LIBRARIES.md](./LIBRARIES.md):
 
-- **TanStack Query** — query-key management, key/`signal` flow through
-  `queryFn`, `queryOptions()`, invalidation through the key factory.
-- **Zustand** — `immer` and `persist` middleware (`partialize`, `version`),
-  optional auto-selectors.
-- **React Hook Form** — bind fields through the UI library's field component, not
-  `register()`; validate with a schema.
 - **Dates** — ask before adding a date library; prefer `date-fns` for
   timezone-aware work.
 - **Data handling** — ask before adding `@mobily/ts-belt` and `ts-pattern`; no
   nested ternaries, immutable data, compose with `pipe()`.
+
+React libraries (TanStack Query, Zustand, React Hook Form) live in the `react`
+skill's `LIBRARIES.md`.
